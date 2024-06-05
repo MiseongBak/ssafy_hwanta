@@ -1,0 +1,7 @@
+<launch>
+    <node pkg="chapter7" type="gps.py" name="utm_publisher"/>
+    <node pkg="chapter7" type="odometry.py" name="odom_publisher"/>
+    <node pkg="chapter7" type="mgeo_pub.py" name="MGeo_publisher"/>
+    <node pkg="chapter7" type="tf_pub.py" name="tf_publisher"/>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find chapter7)/rviz/localization_rviz_setting.rviz" />
+</launch>

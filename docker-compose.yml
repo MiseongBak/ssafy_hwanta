@@ -1,0 +1,15 @@
+services:
+  client:
+    image : 2am_client
+    container_name: client
+    build:
+      context: ./client
+    ports:
+      - "5173:5173"
+  server:
+    image: 2am_server
+    container_name: server
+    build:
+      context: ./server/autodriving
+    ports:
+      - "3000:3000"

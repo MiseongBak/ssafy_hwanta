@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <!-- import roslijs scripts : for using ROS -->
+        <script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+
+
+        <!-- import js script : for using js with HTML -->
+        <script type="text/javascript" type="text/javascript">
+            
+            // connect to ROS_bridge_server (local websocket)
+            var ros = new ROSLIB.Ros({
+                url : 'ws://localhost:9090'
+            });
+            // check ROS_bridge Connection Status
+            ros.on('connection', function() {
+                document.getElementById("status").innerHTML = "Connected";
+            });
+            ros.on('error', function(error) {
+                document.getElementById("status").innerHTML = "Error";
+            });
+            ros.on('close', function() {
+                document.getElementById("status").innerHTML = "Closed";
+            });
+
+
+            // -------------------------------------------- Ego status --------------------------------------------
+            // get Ego status data from topic : /Ego_topic 
+            var Ego_topic_listener = new ROSLIB.Topic({
+                    ros : ros,
+                    name : '/Ego_topic',
+                    messageType : 'morai_msgs/EgoVehicleStatus'
+                });
+
+            // activate like callback_function
+            Ego_topic_listener.subscribe(function(data) {
+                document.getElementById("accel").innerHTML = data.accel * 100;  // to express as a percentage (%)
+                document.getElementById("brake").innerHTML = data.brake * 100;  // to express as a percentage (%)
+                document.getElementById("position.x").innerHTML = data.position.x; // utm_x
+                document.getElementById("position.y").innerHTML = data.position.y; // utm_y
+                
+                var velocity = data.velocity.x;
+                if (velocity < 0) {
+                    velocity = 0
+                }
+                // parseInt : discard decimal places (only show int)
+                document.getElementById("velocity.x").innerHTML = parseInt(velocity * 3.6); //  m/s  >>  km/h
+            })
+
+
+            // -------------------------------------------- GPS Sensor --------------------------------------------
+            // get GPS data from topic : /gps
+            var GPS_topic_listener = new ROSLIB.Topic({
+                ros : ros,
+                name : '/gps',
+                messageType : 'morai_msgs/GPSMessage'
+            })
+
+            GPS_topic_listener.subscribe(function(data) {
+                document.getElementById("GPS_altitude").innerHTML = data.altitude
+                document.getElementById("GPS_latitude").innerHTML = data.latitude
+                document.getElementById("GPS_longitude").innerHTML = data.longitude
+            })
+            
+            
+            // -------------------------------------------- IMU Sensor --------------------------------------------
+            // get IMU data from topic : /imu
+            var IMU_topic_listener = new ROSLIB.Topic({
+                ros : ros,
+                name : '/imu',
+                messageType : 'sensor_msgs/Imu'
+            })
+
+            IMU_topic_listener.subscribe(function(data) {
+                document.getElementById("linear_acceleration_x").innerHTML = data.linear_acceleration.x
+                document.getElementById("linear_acceleration_y").innerHTML = data.linear_acceleration.y
+                document.getElementById("linear_acceleration_z").innerHTML = data.linear_acceleration.z
+                document.getElementById("vector_x").innerHTML = data.orientation.x
+                document.getElementById("vector_y").innerHTML = data.orientation.y
+                document.getElementById("vector_z").innerHTML = data.orientation.z
+                document.getElementById("scalar_w").innerHTML = data.orientation.w
+            })
+
+
+            // -------------------------------------------- Camera Sensor --------------------------------------------
+            
+            // get Camera image from topic : /image_jpeg/compressed
+            var Camera_listener = new ROSLIB.Topic({
+                ros : ros, 
+                name : '/image_jpeg/compressed',
+                messageType : 'sensor_msgs/CompressedImage'
+            });
+
+            Camera_listener.subscribe(function(data) {
+                document.getElementById('image').src = "data:image/jpeg;base64," + data.data;
+            })
+        </script>
+    </head>
+
+
+
+    <body>
+        <h1>ROS to Web [Local 환경] </h1>
+        <p>ROS_bridge Connection Status : <span style="font-size: x-large; color: magenta;" id="status"></span></p>
+        
+        <br><hr>
+        <h2>topic : /Ego_status</h2>
+        <br>
+        <p>Accel (%): <span id="accel"></span></p>
+        <p>Brake (%): <span id="brake"></span></p>
+        <p>position.x (utm): <span id="position.x"></span></p>
+        <p>position.y (utm): <span id="position.y"></span></p>
+        <p>velocity   (km/h): <span id="velocity.x"></span></p>
+        
+
+        <br><hr>
+        <h2>topic : /gps</h2>
+        <br>
+        <p>altitude (고도) : <span id="GPS_altitude"></span></p>
+        <p>latitude (위도) : <span id="GPS_latitude"></span></p>
+        <p>longitude (경도) : <span id="GPS_longitude"></span></p>
+
+
+        <br><hr>
+        <h2>topic : /imu</h2>
+        <br>
+        <h5>3축에 대한 선형 가속도</h5>
+        <p>linear_acceleration_x : <span id="linear_acceleration_x"></span></p>
+        <p>linear_acceleration_y : <span id="linear_acceleration_y"></span></p>
+        <p>linear_acceleration_z : <span id="linear_acceleration_z"></span></p>
+        <br>
+        <h5>Quaternion 벡터(x,y,z) 스칼라(w)</h5>
+        <p>vector_x : <span id="vector_x"></span></p>
+        <p>vector_y : <span id="vector_y"></span></p>
+        <p>vector_z : <span id="vector_z"></span></p>
+        <p>scalar_w : <span id="scalar_w"></span></p>
+
+
+        <br><hr>
+        <h2>topic : /image_jpeg/compressed</h2>
+        <img width="500" height="400" id="image"/>
+
+
+    </body>
+</html>
